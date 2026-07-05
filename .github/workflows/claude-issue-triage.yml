@@ -1,0 +1,97 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Issue Triage
+        id: claude-triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          claude_args: |
+            --allowed-tools "Bash(gh label:*),Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Read,Grep,Glob"
+
+          prompt: |
+            Eres un asistente de triaje de issues para este repositorio (un juego de
+            Tetris en JavaScript vanilla con Canvas: `index.html`, `style.css`,
+            `game.js`). El issue a analizar es el #${{ github.event.issue.number }}.
+
+            Sigue estos pasos:
+
+            1. Asegura (de forma idempotente, créalos si faltan, no falles si ya
+               existen) el siguiente set estándar de labels usando
+               `gh label create "<nombre>" --color <hex> --description "<desc>" --force`:
+               - bug (d73a4a) — Algo no funciona como se espera
+               - enhancement (a2eeef) — Nueva funcionalidad o mejora
+               - question (d876e3) — Se necesita más información o aclaración
+               - documentation (0075ca) — Mejoras o correcciones a la documentación
+               - duplicate (cfd3d7) — Este issue ya existe
+               - good first issue (7057ff) — Bueno para nuevos contribuidores
+               - needs-more-info (fbca04) — Falta información para poder diagnosticar
+               - wontfix (ffffff) — No se abordará
+               - priority:high (b60205) — Prioridad alta
+               - priority:medium (fbca04) — Prioridad media
+               - priority:low (0e8a16) — Prioridad baja
+
+            2. Lee el issue completo con
+               `gh issue view ${{ github.event.issue.number }} --json title,body,comments`
+               y, si es necesario para entender el problema, revisa el código
+               relevante del repo (`game.js`, `index.html`, `style.css`) con
+               Read/Grep/Glob.
+
+            3. Si el issue no tiene información suficiente para diagnosticarlo
+               (falta contexto, pasos para reproducir, comportamiento esperado vs
+               actual, etc.), aplica la label `needs-more-info` y, en el comentario
+               del paso 5, pide amablemente en español los datos que faltan.
+
+            4. Elige y aplica del set estándar las labels apropiadas (normalmente
+               un tipo como `bug`/`enhancement`/`question`/`documentation`/`duplicate`
+               y, cuando aplique, una prioridad `priority:high|medium|low`) con:
+               `gh issue edit ${{ github.event.issue.number }} --add-label "<a>,<b>"`
+               No agregues labels que no formen parte del set estándar anterior.
+
+            5. Publica (o actualiza) un comentario de diagnóstico en **español**
+               usando `gh issue comment` / `gh issue edit` sobre un comentario
+               existente. El comentario debe empezar con el marcador oculto
+               `<!-- claude-triage -->` en la primera línea. Antes de publicar,
+               revisa con `gh issue view ${{ github.event.issue.number }} --json comments`
+               si ya existe un comentario tuyo que contenga ese marcador; si existe,
+               actualízalo (no crees uno nuevo, evita duplicados). El comentario debe
+               tener esta estructura exacta:
+
+               ```
+               <!-- claude-triage -->
+               ## 🔎 Diagnóstico automático
+
+               **Resumen:** <resumen breve del problema en 1-2 frases>
+
+               **Causa raíz probable:** <hipótesis técnica fundamentada, referenciando
+               funciones/variables concretas de game.js cuando aplique>
+
+               **Archivos afectados:** <lista de archivos y, si es posible, funciones>
+
+               **Enfoque de solución sugerido:** <pasos concretos que otro desarrollador
+               (o Claude, si se le menciona con @claude en este issue) podría seguir para
+               implementar el fix>
+
+               **Labels aplicados:** <lista de labels que aplicaste en el paso 4>
+               ```
+
+               Este diagnóstico se usará después como base para escribir el código de
+               la solución, así que sé concreto y técnico, no genérico.
