@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Tetris</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -10,15 +10,26 @@
   <div class="wrapper">
     <div class="header-row">
       <h1 class="game-title">TETRIS</h1>
-      <label class="theme-switch" title="Cambiar tema claro/oscuro">
-        <input type="checkbox" id="theme-toggle" />
-        <span class="theme-switch-slider"></span>
-      </label>
+      <div class="header-controls">
+        <button id="pause-btn" class="icon-btn" title="Pausa">⏸</button>
+        <button id="sound-btn" class="icon-btn" title="Sonido">🔊</button>
+        <label class="theme-switch" title="Cambiar tema claro/oscuro">
+          <input type="checkbox" id="theme-toggle" />
+          <span class="theme-switch-slider"></span>
+        </label>
+      </div>
     </div>
-    <div class="game-container">
-      <canvas id="board" width="300" height="600"></canvas>
 
-      <aside class="panel">
+    <div class="game-container">
+      <aside class="panel panel-left">
+        <div class="panel-section">
+          <span class="label">HOLD</span>
+          <canvas id="hold-canvas" width="90" height="90"></canvas>
+        </div>
+        <div class="panel-section">
+          <span class="label">RÉCORD</span>
+          <span class="value" id="high-score">0</span>
+        </div>
         <div class="panel-section">
           <span class="label">SCORE</span>
           <span class="value" id="score">0</span>
@@ -31,31 +42,64 @@
           <span class="label">LEVEL</span>
           <span class="value" id="level">1</span>
         </div>
+      </aside>
 
+      <div class="board-wrap">
+        <canvas id="board" width="300" height="600"></canvas>
+        <div id="toast" class="toast"></div>
+
+        <div id="overlay" class="overlay hidden">
+          <div class="overlay-box">
+            <p id="overlay-title">GAME OVER</p>
+            <p id="overlay-score"></p>
+            <p id="overlay-highscore" class="highscore-tag"></p>
+            <button id="resume-btn" class="hidden">Continuar</button>
+            <button id="restart-btn">Reiniciar</button>
+          </div>
+        </div>
+
+        <div id="menu-overlay" class="overlay">
+          <div class="overlay-box">
+            <p class="menu-title">TETRIS</p>
+            <p class="menu-highscore" id="menu-high-score"></p>
+            <button id="start-btn">JUGAR</button>
+            <p class="menu-hint">
+              ← → Mover · ↓ Bajar · ↑/X Rotar · Z Rotar ← · Espacio Caída · C Guardar · P Pausa
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="panel panel-right">
         <div class="panel-section">
           <span class="label">NEXT</span>
-          <canvas id="next-canvas" width="120" height="120"></canvas>
+          <canvas id="next-canvas-0" width="90" height="90"></canvas>
+          <canvas id="next-canvas-1" width="90" height="90"></canvas>
+          <canvas id="next-canvas-2" width="90" height="90"></canvas>
         </div>
 
         <div class="panel-section controls">
           <span class="label">CONTROLS</span>
           <ul>
             <li><kbd>←</kbd><kbd>→</kbd> mover</li>
-            <li><kbd>↑</kbd> rotar</li>
+            <li><kbd>↑</kbd><kbd>X</kbd> rotar</li>
+            <li><kbd>Z</kbd> rotar ←</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
+            <li><kbd>C</kbd> guardar</li>
             <li><kbd>P</kbd> pausa</li>
           </ul>
         </div>
       </aside>
     </div>
 
-    <div id="overlay" class="overlay hidden">
-      <div class="overlay-box">
-        <p id="overlay-title">GAME OVER</p>
-        <p id="overlay-score"></p>
-        <button id="restart-btn">Reiniciar</button>
-      </div>
+    <div class="touch-controls">
+      <button class="touch-btn" data-action="hold">HOLD</button>
+      <button class="touch-btn" data-action="left">◀</button>
+      <button class="touch-btn" data-action="down">▼</button>
+      <button class="touch-btn" data-action="right">▶</button>
+      <button class="touch-btn" data-action="rotate">⟳</button>
+      <button class="touch-btn" data-action="drop">DROP</button>
     </div>
   </div>
 

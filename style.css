@@ -8,38 +8,50 @@
   --bg: #0f0f17;
   --fg: #e0e0e0;
   --title-color: #7aa2f7;
+  --title-glow: rgba(122, 162, 247, 0.5);
   --board-bg: #1a1a25;
   --board-border: #2a2a3a;
   --panel-label: #555570;
   --value-color: #7aa2f7;
+  --accent-color: #ffd54f;
   --kbd-bg: #22223a;
   --kbd-border: #3a3a5a;
   --kbd-color: #aaa;
   --control-color: #888;
-  --overlay-bg: rgba(10, 10, 20, 0.75);
+  --overlay-bg: rgba(10, 10, 20, 0.8);
   --overlay-title-color: #e57373;
   --restart-bg: #7aa2f7;
   --restart-color: #0f0f17;
   --restart-hover: #9bbdff;
+  --icon-btn-bg: #1e1e2c;
+  --icon-btn-border: #3a3a5a;
+  --toast-bg: rgba(122, 162, 247, 0.92);
+  --toast-color: #0f0f17;
 }
 
 body.light-theme {
   --bg: #f0f0f5;
   --fg: #1a1a25;
   --title-color: #3b5bdb;
+  --title-glow: rgba(59, 91, 219, 0.35);
   --board-bg: #ffffff;
   --board-border: #ccccdd;
   --panel-label: #7a7a90;
   --value-color: #3b5bdb;
+  --accent-color: #c98a00;
   --kbd-bg: #e0e0ee;
   --kbd-border: #c0c0d0;
   --kbd-color: #555;
   --control-color: #666;
-  --overlay-bg: rgba(255, 255, 255, 0.75);
+  --overlay-bg: rgba(255, 255, 255, 0.82);
   --overlay-title-color: #d32f2f;
   --restart-bg: #3b5bdb;
   --restart-color: #ffffff;
   --restart-hover: #5b7ff0;
+  --icon-btn-bg: #ffffff;
+  --icon-btn-border: #ccccdd;
+  --toast-bg: rgba(59, 91, 219, 0.92);
+  --toast-color: #ffffff;
 }
 
 body {
@@ -52,6 +64,7 @@ body {
   min-height: 100vh;
   user-select: none;
   transition: background 0.2s, color 0.2s;
+  padding: 16px;
 }
 
 .wrapper {
@@ -72,12 +85,48 @@ body {
   font-weight: 800;
   letter-spacing: 8px;
   color: var(--title-color);
+  text-shadow: 0 0 18px var(--title-glow);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: var(--icon-btn-bg);
+  border: 1px solid var(--icon-btn-border);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg);
+  transition: background 0.15s, transform 0.1s;
+}
+
+.icon-btn:hover {
+  transform: translateY(-1px);
+}
+
+.icon-btn:active {
+  transform: translateY(0);
 }
 
 .game-container {
   display: flex;
   gap: 20px;
   align-items: flex-start;
+  justify-content: center;
+}
+
+.board-wrap {
+  position: relative;
+  flex-shrink: 0;
 }
 
 #board {
@@ -129,13 +178,14 @@ body {
   transform: translateX(20px);
 }
 
-/* ---- Panel lateral ---- */
+/* ---- Paneles laterales ---- */
 .panel {
-  width: 160px;
+  width: 110px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   padding-top: 4px;
+  flex-shrink: 0;
 }
 
 .panel-section {
@@ -153,17 +203,27 @@ body {
 
 .value {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--value-color);
   letter-spacing: 1px;
 }
 
-#next-canvas {
+#hold-canvas,
+[id^="next-canvas"] {
   display: block;
   border: 1px solid var(--board-border);
   background: var(--board-bg);
   border-radius: 4px;
+  transition: opacity 0.15s;
+}
+
+#hold-canvas.disabled {
+  opacity: 0.35;
+}
+
+.panel-right .panel-section:first-child {
+  gap: 8px;
 }
 
 /* ---- Controles ---- */
@@ -192,6 +252,31 @@ kbd {
   color: var(--kbd-color);
 }
 
+/* ---- Toast ---- */
+.toast {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translate(-50%, -8px);
+  background: var(--toast-bg);
+  color: var(--toast-color);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 2px;
+  padding: 6px 18px;
+  border-radius: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 /* ---- Overlay ---- */
 .overlay {
   position: absolute;
@@ -202,6 +287,7 @@ kbd {
   background: var(--overlay-bg);
   backdrop-filter: blur(4px);
   border-radius: 4px;
+  text-align: center;
 }
 
 .overlay.hidden {
@@ -209,15 +295,15 @@ kbd {
 }
 
 .overlay-box {
-  text-align: center;
   display: flex;
   flex-direction: column;
   gap: 12px;
   align-items: center;
+  padding: 20px;
 }
 
 #overlay-title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   letter-spacing: 4px;
   color: var(--overlay-title-color);
@@ -229,8 +315,18 @@ kbd {
   color: var(--value-color);
 }
 
-#restart-btn {
-  margin-top: 8px;
+.highscore-tag {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent-color);
+  min-height: 16px;
+}
+
+#resume-btn,
+#restart-btn,
+#start-btn {
+  margin-top: 4px;
   background: var(--restart-bg);
   color: var(--restart-color);
   border: none;
@@ -240,9 +336,109 @@ kbd {
   font-weight: 700;
   cursor: pointer;
   letter-spacing: 1px;
-  transition: background 0.15s;
+  transition: background 0.15s, transform 0.1s;
 }
 
-#restart-btn:hover {
+#resume-btn.hidden {
+  display: none;
+}
+
+#resume-btn:hover,
+#restart-btn:hover,
+#start-btn:hover {
   background: var(--restart-hover);
+}
+
+#resume-btn:active,
+#restart-btn:active,
+#start-btn:active {
+  transform: scale(0.97);
+}
+
+/* ---- Menú de inicio ---- */
+.menu-title {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 10px;
+  color: var(--title-color);
+  text-shadow: 0 0 20px var(--title-glow);
+}
+
+.menu-highscore {
+  font-size: 13px;
+  color: var(--accent-color);
+  font-weight: 700;
+  letter-spacing: 1px;
+  min-height: 16px;
+}
+
+.menu-hint {
+  max-width: 220px;
+  font-size: 11px;
+  color: var(--control-color);
+  line-height: 1.6;
+  margin-top: 4px;
+}
+
+/* ---- Controles táctiles ---- */
+.touch-controls {
+  display: none;
+  margin-top: 18px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.touch-btn {
+  background: var(--icon-btn-bg);
+  border: 1px solid var(--icon-btn-border);
+  color: var(--fg);
+  border-radius: 10px;
+  padding: 14px 0;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.touch-btn:active {
+  background: var(--kbd-bg);
+}
+
+@media (pointer: coarse) {
+  .touch-controls {
+    display: grid;
+  }
+}
+
+@media (max-width: 720px) {
+  .game-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .panel {
+    flex-direction: row;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    order: 2;
+  }
+
+  .panel-section {
+    align-items: center;
+  }
+
+  .board-wrap {
+    order: 1;
+    max-width: 100%;
+  }
+
+  #board {
+    max-width: 100%;
+    height: auto;
+  }
 }
